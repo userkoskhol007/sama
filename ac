@@ -1,0 +1,809 @@
+
+
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="x-ua-compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="Metro, a sleek, intuitive, and powerful framework for faster and easier web development for Windows Metro Style.">
+    <meta name="keywords" content="آموزش, سامانه آموزش, پرتال سما, سامانه یکپارچه هم آوا,Sama ,Education System">
+    <meta name="author" content="سما سامانه, samasoft.net">
+    <link href="/CAS/CDN/images/favicon.ico" rel="shortcut icon" />
+    <title>کارنامه</title>
+    <link href="/CAS/CDN/css/bundle/cas-all-0.0.5.css" rel="stylesheet" />
+        <link href="/CAS/CDN/css/bundle/cas-all-rtl-0.0.1.css" rel="stylesheet" />
+
+    
+    <script src="/CAS/CDN/js/bundle/education-header-all-0.0.9-part1.js"></script>
+    <script src="/CAS/CDN/js/bundle/education-header-all-0.0.9-part2.js"></script>
+    <script src="/CAS/CDN/js/kendo-ui/new/kendo.upload.min.js"></script>
+    <script src="/CAS/CDN/js/kendo-ui/new/kendo.numerictextbox.min.js"></script>
+
+    
+    <style>
+        .form-control.readonly, input:read-only, input:-moz-read-only {
+            background-color: #eee;
+            opacity: 1;
+            -webkit-user-select: text !important;
+            -moz-user-select: text !important;
+            -ms-user-select: text !important;
+            -o-user-select: text !important;
+            user-select: text !important;
+        }
+
+        .modal .modal-dialog .modal-body > .litegrid-parent {
+            overflow: auto;
+        }
+    </style>
+
+    <script type="text/javascript">
+		
+		var _LatinNumbers = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+		var _PersianNumbers = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+		function ToLatinNumbers(input) {
+			var res = '';
+			for (var i = 0; i < input.length; i++) {
+				res += _LatinNumbers[_PersianNumbers.indexOf(input[i])] || input[i];
+			}
+			return res;
+		}
+
+		function loadMenuBar() {
+			// Load menu from CAS
+            $.get('/CAS/Home/Menu').success(function(res) {
+                //$(".container-fluid").prepend(res);
+                $("#menu-container").replaceWith(res);
+            });
+        }
+		$(function () {
+			loadMenuBar();
+		});
+
+		
+		setCulture('fa-IR');
+		$(document).ajaxError(function (e, jqxhr, exception) {
+			if (jqxhr.responseText && jqxhr.responseText.indexOf('نشست') != -1) {
+				window.location = '/CAS/Account/Login' + '?ReturnUrl=' + encodeURI(window.location);
+			}
+		});
+
+		$(function () {
+
+			$('[data-toggle="tooltip"]').tooltip();
+			$(document).off("keypress", '.number');
+			$(document).on("keypress", '.number', function (e) {
+				var key = (!e.keyCode) ? (!e.which ? e.charCode : e.which) : (e.keyCode);
+				if (key > 31 && key != 46 && key != 37 && (key < 48 || key > 57) && key != 38 && key != 40) {
+					e.preventDefault();
+					return false;
+				}
+			});
+
+			$("ul.ui-tabs-nav").html();
+			$("ul.ui-tabs-nav").removeClass("ui-widget-header");
+			$('#sliderButton').click(function () {
+				$("#menu-right-box").toggleClass('visible', 'slow');
+			});
+
+			$.get('/Education/General/GetLastError', function (result) {
+				if (result) $.alert(result);
+				console.log(result);
+			});
+
+			$.ajaxSetup({
+				error: function (jqXHR) { if (jqXHR.responseText) $.alert(jqXHR.responseText); },
+				timeout: 60000,
+				datatype: 'json',
+				cache: false,
+			});
+
+
+			window.showMessage = function (message, timeout) {
+				new Noty({ text: message, type: 'info', timeout: timeout, layout: "topCenter", theme: 'metroui', closeWith: ['click', 'button'] }).show();
+			};
+
+			var timeOut = Number(360) * 60;
+
+			window.resetTimer = function () {
+				window.timer = timeOut;
+
+				// comment because The "Same Origin" security policy
+				//if (window.opener && window.opener.timer) {
+				//	if(window.resetTimer !== window.opener.resetTimer)
+				//	    window.opener.resetTimer();
+				//}
+			}
+			window.resetTimer();
+
+			$(document).ajaxComplete(function (e, jqxhr, settings) {
+				resetTimer();
+			});
+
+			$(document).ajaxSend(function (e, jqxhr, settings) {
+				if (timer == 0) {
+					$.alert('شما مدتی در سیستم غیر فعال بوده اید، لطفأ دوباره وارد شوید');
+					window.location = '/CAS/Account/Login' + '?ReturnUrl=' + escape(window.location);
+				}
+			});
+			String.prototype.toHHMMSS = function () {
+				var sec_num = parseInt(this, 10); // don't forget the second param
+				var hours = Math.floor(sec_num / 3600);
+				var minutes = Math.floor((sec_num - (hours * 3600)) / 60);
+				var seconds = sec_num - (hours * 3600) - (minutes * 60);
+
+				if (hours < 10) { hours = "0" + hours; }
+				if (minutes < 10) { minutes = "0" + minutes; }
+				if (seconds < 10) { seconds = "0" + seconds; }
+				return hours + ':' + minutes + ':' + seconds;
+			}
+
+			var timerHandle = setInterval(function () {
+				if (timer < timeOut / 4) {
+					$('.timerText').animate({ backgroundColor: '#ff99bb' }, 'slow');
+				}
+				else if (timer < timeOut / 2) {
+					$('.timerText').animate({ backgroundColor: '#fdffaa' }, 'slow');
+				}
+				else {
+					$('.timerText').animate({ backgroundColor: '#99ffcc' }, 'slow');
+				}
+				//alert(Math.floor(timer / 60));
+				//alert(timer % 60);
+				//				$('.timerText').val(String.advanceFormat('{0:##}:{1:00}', Math.floor(timer / 60), timer % 60));
+
+				$('.timerText').val((Math.floor(timer / 60) * 60 + timer % 60).toString().toHHMMSS());
+				if (timer == 0) {
+					clearInterval(timerHandle);
+					$.alert('شما مدتی در سیستم غیر فعال بوده اید، لطفأ دوباره وارد شوید');
+				}
+				else {
+					timer--;
+				}
+			}, 1000);
+
+			//digit grouping for display 1000000 as: 1,000,000
+			$(".group-digit").each(GroupDigit);
+			function GroupDigit() {
+				function commafy(num) {
+					var str = num.toString().split('.');
+					if (str[0].length >= 4) {
+						str[0] = str[0].replace(/(\d)(?=(\d{3})+$)/g, '$1,');
+					}
+					if (str[1] && str[1].length >= 4) {
+						str[1] = str[1].replace(/(\d{3})/g, '$1,');
+					}
+					return str.join('.');
+				}
+				$(this).html(commafy($(this).html()));
+			}
+
+			//اخرین گریدی که روی آن کلیک شده است
+			$('.k-grid').click(function () {
+				lastId = $(this).attr("id");
+				GridCellClick(lastId);
+			});
+		});
+
+		function focusColor(element) {
+			$(element).focus();
+		}
+
+		function clearFirst() {
+			$('form input').each(function () {
+				switch (this.type) {
+					case 'text':
+						$(this).val('');
+						break;
+				}
+			});
+		}
+    </script>
+    
+    <script type="text/javascript">
+
+        $(function () {
+            $('#myTab a:first').tab('show');
+        });
+
+        
+    </script>
+
+</head>
+<body>
+    <div id="menu-container">
+        <header class="app-bar navy" data-role="appbar">
+            <span class="app-bar-pull">
+                <a href="javascript:loadMenuBar();" class="app-bar-element place-right branding"><span class="fa fa-bars"></span></a>
+                <span class="menu-search-box" style="display:none;">
+                    <a class="place-right">
+                        <span class="input-control text" style="margin-top:8px;">
+                            <input type="text" id="searchText" placeholder="جستجو" autocomplete="off">
+                        </span>
+                    </a>
+                    <span class="app-bar-divider"></span>
+                </span>
+                <a href="javascript:void(0);" class="place-right branding university-logo" style="margin-right:3px;">
+                    
+                    <img src="/CAS/CDN/UniversityGilan_images/UniversityGilanLogo.png" style="height: 49px; display: inline-block;" title="دانشگاه علوم پزشکی گیلان" alt="لوگوی دانشگاه" />
+                </a>
+                <a href="javascript:void(0);" class="place-right branding university-title visible-lg visible-md">دانشگاه علوم پزشکی گیلان</a>
+            </span>
+            <span class="app-bar-pull left-menu-items">
+                    <a href="/CAS/Account/Logout" title="خروج" class="app-bar-element branding"><span class="fa-power-off fa font14"></span></a>
+                    <a href="/CAS/Users/Profile" title="140211124003 (140211124003)" class="app-bar-element branding font14"> <span class="fa-user fa font14"></span> <span class="hidden-xs">140211124003</span></a>
+                    <a href="javascript:void(0);" id="notification-button" class="app-bar-element branding" title="پیام‌ها">
+                        <span class="fa fa-envelope-o font14"></span>
+                        <span class="counter unSeenMessageCount" style="font-size:9px"></span>
+					</a>
+            </span>
+        </header>
+    </div>
+    
+    <div class="container-fluid">
+        
+
+<div class="panel panel-default">
+    <div class="panel-heading">
+        <label>کارنامه</label>
+    </div>
+    <div class="row">
+<form action="/Education/Workbooks/TotalStudentPrintStimul" method="get" target="_blank"></form>
+        
+    </div>
+    <div class="panel-body">
+        <ul class="nav nav-tabs" id="myTab" data-tabs="tabs">
+                    <li>
+                        <a data-toggle="tab" href="#14021">
+                            نیمسال 14021
+                        </a>
+                    </li>
+                    <li>
+                        <a data-toggle="tab" href="#14022">
+                            نیمسال 14022
+                        </a>
+                    </li>
+
+        </ul>
+        <div id="my-tab-content" class="tab-content">
+                <div class="tab-pane" id="14021">
+                    
+<div id="gridID" class="litegrid-parent">
+    <div id="StudentLessonGrid" class="liteGrid grid-22 ">
+	<div class="gridHeaderRow">
+		<div class="cell span-## width-40" name="RowIndex" title="ردیف">
+			<div class="sortImage">
+
+			</div><span>ردیف</span>
+		</div><div class="cell span-## width-130" name="TermLesson.Lesson.LessonCode" title="کد درس">
+			<div class="sortImage">
+
+			</div><span>کد درس</span>
+		</div><div class="cell span-## sortedColumn asc width-200" name="TermLesson.Lesson.LessonName" title="نام درس">
+			<div class="sortImage">
+
+			</div><span>نام درس</span>
+		</div><div class="cell span-## width-70" name="TermLesson.LessonGroup" title="گروه درس">
+			<div class="sortImage">
+
+			</div><span>گروه درس</span>
+		</div><div class="cell span-## width-80" name="TermLesson.Lesson.TheoreticalUnit" title="واحد نظری">
+			<div class="sortImage">
+
+			</div><span>واحد نظری</span>
+		</div><div class="cell span-## width-80" name="TermLesson.Lesson.PracticalUnit" title="واحد عملی">
+			<div class="sortImage">
+
+			</div><span>واحد عملی</span>
+		</div><div class="cell span-## width-100" name="GradeStr" title="نمره">
+			<div class="sortImage">
+
+			</div><span>نمره</span>
+		</div><div class="cell span-## width-140" name="LessonGradeStatus.Title" title="عنوان">
+			<div class="sortImage">
+
+			</div><span>عنوان</span>
+		</div>
+	</div><ul class="gridRows">
+		<li class="gridRowEven"><div title="1" class="cell span-1 centerAlign width-40">
+			1
+		</div><div title="14196" class="cell span-3 rightAlign width-130">
+			14196
+		</div><div title="آداب پزشکی 1 " class="cell span-3 rightAlign width-200">
+			آداب پزشکی 1 
+		</div><div title="0" class="cell span-3 rightAlign width-70">
+			0
+		</div><div title="0" class="cell span-3 centerAlign width-80">
+			0
+		</div><div title="0/5" class="cell span-3 centerAlign width-80">
+			0/5
+		</div><div title="17.75" class="cell span-3 rightAlign width-100">
+			17.75
+		</div><div title="بی‌اثر در معدل نیمسال و معدل کل" class="cell span-3 rightAlign width-140">
+			بی‌اثر در معدل نیمسال و معدل کل
+		</div></li><li class="gridRowOdd"><div title="2" class="cell span-1 centerAlign width-40">
+			2
+		</div><div title="13396" class="cell span-3 rightAlign width-130">
+			13396
+		</div><div title="اصول خدمات سلامت " class="cell span-3 rightAlign width-200">
+			اصول خدمات سلامت 
+		</div><div title="0" class="cell span-3 rightAlign width-70">
+			0
+		</div><div title="1/5" class="cell span-3 centerAlign width-80">
+			1/5
+		</div><div title="0" class="cell span-3 centerAlign width-80">
+			0
+		</div><div title="11.5" class="cell span-3 rightAlign width-100">
+			11.5
+		</div><div title="قبول" class="cell span-3 rightAlign width-140">
+			قبول
+		</div></li><li class="gridRowEven"><div title="3" class="cell span-1 centerAlign width-40">
+			3
+		</div><div title="1209602" class="cell span-3 rightAlign width-130">
+			1209602
+		</div><div title="بیوشیمی مولکول -سلول(عملی) " class="cell span-3 rightAlign width-200">
+			بیوشیمی مولکول -سلول(عملی) 
+		</div><div title="0" class="cell span-3 rightAlign width-70">
+			0
+		</div><div title="0" class="cell span-3 centerAlign width-80">
+			0
+		</div><div title="0/4" class="cell span-3 centerAlign width-80">
+			0/4
+		</div><div title="11.9" class="cell span-3 rightAlign width-100">
+			11.9
+		</div><div title="قبول" class="cell span-3 rightAlign width-140">
+			قبول
+		</div></li><li class="gridRowOdd"><div title="4" class="cell span-1 centerAlign width-40">
+			4
+		</div><div title="1209601" class="cell span-3 rightAlign width-130">
+			1209601
+		</div><div title="بیوشیمی مولکول -سلول(نظری) " class="cell span-3 rightAlign width-200">
+			بیوشیمی مولکول -سلول(نظری) 
+		</div><div title="0" class="cell span-3 rightAlign width-70">
+			0
+		</div><div title="1/9" class="cell span-3 centerAlign width-80">
+			1/9
+		</div><div title="0" class="cell span-3 centerAlign width-80">
+			0
+		</div><div title="7.1" class="cell span-3 rightAlign width-100">
+			7.1
+		</div><div title="مردود" class="cell span-3 rightAlign width-140">
+			مردود
+		</div></li><li class="gridRowEven"><div title="5" class="cell span-1 centerAlign width-40">
+			5
+		</div><div title="1896" class="cell span-3 rightAlign width-130">
+			1896
+		</div><div title="تربیت بدنی 1 " class="cell span-3 rightAlign width-200">
+			تربیت بدنی 1 
+		</div><div title="2" class="cell span-3 rightAlign width-70">
+			2
+		</div><div title="0" class="cell span-3 centerAlign width-80">
+			0
+		</div><div title="1" class="cell span-3 centerAlign width-80">
+			1
+		</div><div title="20" class="cell span-3 rightAlign width-100">
+			20
+		</div><div title="قبول" class="cell span-3 rightAlign width-140">
+			قبول
+		</div></li><li class="gridRowOdd"><div title="6" class="cell span-1 centerAlign width-40">
+			6
+		</div><div title="114096" class="cell span-3 rightAlign width-130">
+			114096
+		</div><div title="روانشناسی سلامت " class="cell span-3 rightAlign width-200">
+			روانشناسی سلامت 
+		</div><div title="0" class="cell span-3 rightAlign width-70">
+			0
+		</div><div title="2" class="cell span-3 centerAlign width-80">
+			2
+		</div><div title="0" class="cell span-3 centerAlign width-80">
+			0
+		</div><div title="10" class="cell span-3 rightAlign width-100">
+			10
+		</div><div title="قبول" class="cell span-3 rightAlign width-140">
+			قبول
+		</div></li><li class="gridRowEven"><div title="7" class="cell span-1 centerAlign width-40">
+			7
+		</div><div title="145966" class="cell span-3 rightAlign width-130">
+			145966
+		</div><div title="زبان پیش دانشگاهی" class="cell span-3 rightAlign width-200">
+			زبان پیش دانشگاهی
+		</div><div title="0" class="cell span-3 rightAlign width-70">
+			0
+		</div><div title="2" class="cell span-3 centerAlign width-80">
+			2
+		</div><div title="0" class="cell span-3 centerAlign width-80">
+			0
+		</div><div title="15.5" class="cell span-3 rightAlign width-100">
+			15.5
+		</div><div title="بی‌اثر در معدل نیمسال و معدل کل" class="cell span-3 rightAlign width-140">
+			بی‌اثر در معدل نیمسال و معدل کل
+		</div></li><li class="gridRowOdd"><div title="8" class="cell span-1 centerAlign width-40">
+			8
+		</div><div title="1029602" class="cell span-3 rightAlign width-130">
+			1029602
+		</div><div title="علوم تشریح اسکلتی - عضلانی (عملی)" class="cell span-3 rightAlign width-200">
+			علوم تشریح اسکلتی - عضلانی (عملی)
+		</div><div title="0" class="cell span-3 rightAlign width-70">
+			0
+		</div><div title="0" class="cell span-3 centerAlign width-80">
+			0
+		</div><div title="0/6" class="cell span-3 centerAlign width-80">
+			0/6
+		</div><div title="" class="cell span-3 rightAlign width-100">
+			
+		</div><div title="نمره گزارش نشده" class="cell span-3 rightAlign width-140">
+			نمره گزارش نشده
+		</div></li><li class="gridRowEven"><div title="9" class="cell span-1 centerAlign width-40">
+			9
+		</div><div title="1029601" class="cell span-3 rightAlign width-130">
+			1029601
+		</div><div title="علوم تشریح اسکلتی - عضلانی(نظری) " class="cell span-3 rightAlign width-200">
+			علوم تشریح اسکلتی - عضلانی(نظری) 
+		</div><div title="0" class="cell span-3 rightAlign width-70">
+			0
+		</div><div title="1/8" class="cell span-3 centerAlign width-80">
+			1/8
+		</div><div title="0" class="cell span-3 centerAlign width-80">
+			0
+		</div><div title="9.5" class="cell span-3 rightAlign width-100">
+			9.5
+		</div><div title="مردود" class="cell span-3 rightAlign width-140">
+			مردود
+		</div></li><li class="gridRowOdd"><div title="10" class="cell span-1 centerAlign width-40">
+			10
+		</div><div title="1696" class="cell span-3 rightAlign width-130">
+			1696
+		</div><div title="فارسی " class="cell span-3 rightAlign width-200">
+			فارسی 
+		</div><div title="0" class="cell span-3 rightAlign width-70">
+			0
+		</div><div title="3" class="cell span-3 centerAlign width-80">
+			3
+		</div><div title="0" class="cell span-3 centerAlign width-80">
+			0
+		</div><div title="9" class="cell span-3 rightAlign width-100">
+			9
+		</div><div title="مردود" class="cell span-3 rightAlign width-140">
+			مردود
+		</div></li><li class="gridRowEven"><div title="11" class="cell span-1 centerAlign width-40">
+			11
+		</div><div title="1179602" class="cell span-3 rightAlign width-130">
+			1179602
+		</div><div title="فیزیولوژی خون(عملی) " class="cell span-3 rightAlign width-200">
+			فیزیولوژی خون(عملی) 
+		</div><div title="0" class="cell span-3 rightAlign width-70">
+			0
+		</div><div title="0" class="cell span-3 centerAlign width-80">
+			0
+		</div><div title="0/1" class="cell span-3 centerAlign width-80">
+			0/1
+		</div><div title="16" class="cell span-3 rightAlign width-100">
+			16
+		</div><div title="قبول" class="cell span-3 rightAlign width-140">
+			قبول
+		</div></li><li class="gridRowOdd"><div title="12" class="cell span-1 centerAlign width-40">
+			12
+		</div><div title="1179601" class="cell span-3 rightAlign width-130">
+			1179601
+		</div><div title="فیزیولوژی خون(نظری) " class="cell span-3 rightAlign width-200">
+			فیزیولوژی خون(نظری) 
+		</div><div title="0" class="cell span-3 rightAlign width-70">
+			0
+		</div><div title="0/3" class="cell span-3 centerAlign width-80">
+			0/3
+		</div><div title="0" class="cell span-3 centerAlign width-80">
+			0
+		</div><div title="15" class="cell span-3 rightAlign width-100">
+			15
+		</div><div title="قبول" class="cell span-3 rightAlign width-140">
+			قبول
+		</div></li><li class="gridRowEven"><div title="13" class="cell span-1 centerAlign width-40">
+			13
+		</div><div title="11196" class="cell span-3 rightAlign width-130">
+			11196
+		</div><div title="فیزیولوژی سلول " class="cell span-3 rightAlign width-200">
+			فیزیولوژی سلول 
+		</div><div title="0" class="cell span-3 rightAlign width-70">
+			0
+		</div><div title="0/8" class="cell span-3 centerAlign width-80">
+			0/8
+		</div><div title="0" class="cell span-3 centerAlign width-80">
+			0
+		</div><div title="16" class="cell span-3 rightAlign width-100">
+			16
+		</div><div title="قبول" class="cell span-3 rightAlign width-140">
+			قبول
+		</div></li><li class="gridRowOdd"><div title="14" class="cell span-1 centerAlign width-40">
+			14
+		</div><div title="1019602" class="cell span-3 rightAlign width-130">
+			1019602
+		</div><div title="مقدمات علوم تشریح(عملی)" class="cell span-3 rightAlign width-200">
+			مقدمات علوم تشریح(عملی)
+		</div><div title="0" class="cell span-3 rightAlign width-70">
+			0
+		</div><div title="0" class="cell span-3 centerAlign width-80">
+			0
+		</div><div title="0/3" class="cell span-3 centerAlign width-80">
+			0/3
+		</div><div title="8" class="cell span-3 rightAlign width-100">
+			8
+		</div><div title="مردود" class="cell span-3 rightAlign width-140">
+			مردود
+		</div></li><li class="gridRowEven"><div title="15" class="cell span-1 centerAlign width-40">
+			15
+		</div><div title="1019601" class="cell span-3 rightAlign width-130">
+			1019601
+		</div><div title="مقدمات علوم تشریح(نظری)" class="cell span-3 rightAlign width-200">
+			مقدمات علوم تشریح(نظری)
+		</div><div title="0" class="cell span-3 rightAlign width-70">
+			0
+		</div><div title="2/2" class="cell span-3 centerAlign width-80">
+			2/2
+		</div><div title="0" class="cell span-3 centerAlign width-80">
+			0
+		</div><div title="9.22" class="cell span-3 rightAlign width-100">
+			9.22
+		</div><div title="مردود" class="cell span-3 rightAlign width-140">
+			مردود
+		</div></li>
+	</ul><div class="summary">
+		<ul>
+			<li><span class="from"></span><span>تا</span><span class="to"></span><span>از</span><span class="total"></span><span>در</span><span class="pages"></span><span>صفحه</span><span></span><span class="selected"></span></li><li></li>
+		</ul>
+	</div>
+</div><script type="text/javascript" language="javascript">
+	$(function() {if(!grid['StudentLessonGrid']) {grid['StudentLessonGrid'] = liteGrid('StudentLessonGrid');window.paginatorCount = 10;Object.merge(grid['StudentLessonGrid'] , {"width":22,"allow_sort":false,"allow_paginate":true,"allow_search":false,"allow_edit":false,"allow_insert":false,"allow_select":false,"table_less":true,"batch":false,"fixed_height":true,"has_header":true,"page_size":100,"use_form":false,"selected":false,"allow_customization":false,"server":true,"culture":"invariant","empty_behavior":"Header","empty_message":"شما درسی در این نیمسال ندارید","requires_validation":false,"paginator_type":"pagenumbers","show_summary":true,"row_height":0,"command_icons":{"add" : "plus-sign","edit" : "edit","delete" : "trash","save" : "ok-circle","choose" : "hand-left","cancel" : "stop"},"protocol":"json","model_type":"StudentLesson"});grid['StudentLessonGrid'].args = {"termId":01a375cf-52c8-4518-928e-2c543ec1ca13,"studentUserId":aec99266-0263-411c-b363-85bda8a6c2b1};grid['StudentLessonGrid'].select='/Education/Workbooks/GetWorkbookStudentTermLessons?termId=01a375cf-52c8-4518-928e-2c543ec1ca13&studentUserId=aec99266-0263-411c-b363-85bda8a6c2b1';grid['StudentLessonGrid'].default_sort='TermLesson.Lesson.LessonName asc';grid['StudentLessonGrid'].Initialize();grid['StudentLessonGrid'].glossary = {"From":"از","To":"تا","Total":"کل","Pages":"صفحه","Selected":"انتخاب شده","Through":"در"};grid['StudentLessonGrid'].PrepareForm();if($('form:has(#StudentLessonGrid)').attr('elements')) $('form:has(#StudentLessonGrid)').attr('elements').sort.value = 'TermLesson.Lesson.LessonName asc';}});
+</script>
+</div>
+<br />
+<br />
+    <table class="table table-bordered">
+        <tbody>
+            <tr class="font-bold">
+                <td class="col-sm-2" colspan="4">
+                    نیمسال
+                </td>
+
+            </tr>
+            <tr>
+                <td class="col-sm-2">
+                    اخذ شده:
+                    <span id="TermSelectedUnits">18/40</span>
+
+                </td>
+                <td class="col-sm-2">
+                    گذرانده :
+                    <span id="TermPassedUnits">6/10</span>
+
+                </td>
+                <td class="col-sm-2">
+                    معدل :
+                    <span id="TermAverage">10/53</span>
+
+                </td>
+                <td class="col-sm-2">
+                    امتیاز :
+                    <span id="TermPoint">161/18</span>
+
+                </td>
+            <tr>
+                <td class="col-sm-2">
+                    رتبه در ترم:
+                    39
+                </td>
+                <td class="col-sm-2">
+                    
+                </td>
+                <td class="col-sm-2">
+                    معدل :
+                    10.53
+                </td>
+                <td class="col-sm-2">
+                    واحد گذرانده کل:
+                    6.10
+                </td>
+            </tr>
+
+            </tr>
+    </table>
+
+
+
+                </div>
+                <div class="tab-pane" id="14022">
+                    
+<div id="gridID" class="litegrid-parent">
+    <div id="StudentLessonGrid" class="liteGrid grid-22 ">
+	<div class="gridHeaderRow">
+		<div class="cell span-## width-40" name="RowIndex" title="ردیف">
+			<div class="sortImage">
+
+			</div><span>ردیف</span>
+		</div><div class="cell span-## width-130" name="TermLesson.Lesson.LessonCode" title="کد درس">
+			<div class="sortImage">
+
+			</div><span>کد درس</span>
+		</div><div class="cell span-## sortedColumn asc width-200" name="TermLesson.Lesson.LessonName" title="نام درس">
+			<div class="sortImage">
+
+			</div><span>نام درس</span>
+		</div><div class="cell span-## width-70" name="TermLesson.LessonGroup" title="گروه درس">
+			<div class="sortImage">
+
+			</div><span>گروه درس</span>
+		</div><div class="cell span-## width-80" name="TermLesson.Lesson.TheoreticalUnit" title="واحد نظری">
+			<div class="sortImage">
+
+			</div><span>واحد نظری</span>
+		</div><div class="cell span-## width-80" name="TermLesson.Lesson.PracticalUnit" title="واحد عملی">
+			<div class="sortImage">
+
+			</div><span>واحد عملی</span>
+		</div><div class="cell span-## width-100" name="GradeStr" title="نمره">
+			<div class="sortImage">
+
+			</div><span>نمره</span>
+		</div><div class="cell span-## width-140" name="LessonGradeStatus.Title" title="عنوان">
+			<div class="sortImage">
+
+			</div><span>عنوان</span>
+		</div>
+	</div><ul class="gridRows">
+
+	</ul><div class="summary">
+		<ul>
+			<li><span class="from"></span><span>تا</span><span class="to"></span><span>از</span><span class="total"></span><span>در</span><span class="pages"></span><span>صفحه</span><span></span><span class="selected"></span></li><li></li>
+		</ul>
+	</div>
+</div><script type="text/javascript" language="javascript">
+	$(function() {if(!grid['StudentLessonGrid']) {grid['StudentLessonGrid'] = liteGrid('StudentLessonGrid');window.paginatorCount = 10;Object.merge(grid['StudentLessonGrid'] , {"width":22,"allow_sort":false,"allow_paginate":true,"allow_search":false,"allow_edit":false,"allow_insert":false,"allow_select":false,"table_less":true,"batch":false,"fixed_height":true,"has_header":true,"page_size":100,"use_form":false,"selected":false,"allow_customization":false,"server":true,"culture":"invariant","empty_behavior":"Header","empty_message":"شما درسی در این نیمسال ندارید","requires_validation":false,"paginator_type":"pagenumbers","show_summary":true,"row_height":0,"command_icons":{"add" : "plus-sign","edit" : "edit","delete" : "trash","save" : "ok-circle","choose" : "hand-left","cancel" : "stop"},"protocol":"json","model_type":"StudentLesson"});grid['StudentLessonGrid'].args = {"termId":f72f4fea-5499-47e8-a396-05e81c9e6598,"studentUserId":aec99266-0263-411c-b363-85bda8a6c2b1};grid['StudentLessonGrid'].select='/Education/Workbooks/GetWorkbookStudentTermLessons?termId=f72f4fea-5499-47e8-a396-05e81c9e6598&studentUserId=aec99266-0263-411c-b363-85bda8a6c2b1';grid['StudentLessonGrid'].default_sort='TermLesson.Lesson.LessonName asc';grid['StudentLessonGrid'].Initialize();grid['StudentLessonGrid'].glossary = {"From":"از","To":"تا","Total":"کل","Pages":"صفحه","Selected":"انتخاب شده","Through":"در"};grid['StudentLessonGrid'].PrepareForm();if($('form:has(#StudentLessonGrid)').attr('elements')) $('form:has(#StudentLessonGrid)').attr('elements').sort.value = 'TermLesson.Lesson.LessonName asc';}});
+</script>
+</div>
+<br />
+<br />
+    <table class="table table-bordered">
+        <tbody>
+            <tr class="font-bold">
+                <td class="col-sm-2" colspan="4">
+                    نیمسال
+                </td>
+
+            </tr>
+            <tr>
+                <td class="col-sm-2">
+                    اخذ شده:
+                    <span id="TermSelectedUnits">0/00</span>
+
+                </td>
+                <td class="col-sm-2">
+                    گذرانده :
+                    <span id="TermPassedUnits">0/00</span>
+
+                </td>
+                <td class="col-sm-2">
+                    معدل :
+                    <span id="TermAverage"></span>
+
+                </td>
+                <td class="col-sm-2">
+                    امتیاز :
+                    <span id="TermPoint">0/00</span>
+
+                </td>
+            <tr>
+                <td class="col-sm-2">
+                    رتبه در ترم:
+                    
+                </td>
+                <td class="col-sm-2">
+                    
+                </td>
+                <td class="col-sm-2">
+                    معدل :
+                    10.53
+                </td>
+                <td class="col-sm-2">
+                    واحد گذرانده کل:
+                    6.10
+                </td>
+            </tr>
+
+            </tr>
+    </table>
+
+
+
+                </div>
+        </div>
+        <br />
+        <br />
+        <br />
+        <br />
+    </div>
+
+</div>
+
+        <div class="alarm-box">
+            <div class="alarm-box-row">
+                <div class="alarm-value">
+                    <p></p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <div id="common-dialog" class="modal fade k-rtl common-dialog" role="dialog" title="dialog Window">
+        <div class="modal-dialog">
+            <div id="common-dialog-content" class="modal-content">
+            </div>
+        </div>
+    </div>
+    <div id="common-dialog2" class="modal fade k-rtl common-dialog" role="dialog" title="dialog Window">
+        <div class="modal-dialog">
+            <div id="common-dialog-content" class="modal-content">
+            </div>
+        </div>
+    </div>
+    <script src="/CAS/CDN/js/bundle/education-footer-all-0.0.3.js"></script>
+
+    
+ 
+
+</body>
+</html>
+
+
+<script type="text/javascript">
+ //Antiforgery token generator
+
+    function GetToken() {
+        var token = '<input name="__RequestVerificationToken" type="hidden" value="W8P9uUTp64eFgQOX_MyXXnU7IFdrE-Opm7hC7CvN32OxCL8y2SICJ115eDEymbXMftmreabJR7U87FS2PABPseOVlKh5RqY9WtiGYbuK3Snsgv-sZIJ031qXtZ1l5BvC0" />';
+        token = $(token).val();
+        return token;
+    }
+
+</script>
+<script type="text/javascript">
+	var refresh = false;
+	window.onbeforeunload = function (event) {
+
+		if(window.event) {
+			if (window.event.clientX < 40 && window.event.clientY < 0) {
+				//alert("back button is clicked");
+			}
+			else{
+				//alert("refresh button is clicked");
+				refresh = true;
+			}
+		}
+		else{
+			if (event.currentTarget.performance.navigation.type == 2) {
+				//alert("back button is clicked");
+			}
+			if (event.currentTarget.performance.navigation.type == 1) {
+				//alert("refresh button is clicked");
+				refresh = true;
+		 }
+		}
+
+	if (refresh == false) { // If F5 is not pressed
+		$.ajax({
+			    url:'/CAS/Account/Logout',
+				contentType: "application/json; charset=utf-8",
+				type: "POST",
+				success: function (data) {
+				    console.log(data);
+				},
+				error: function (x, y, z) {
+				     console.log(x.responseText + "  " + x.status);
+				}
+		 });
+	}
+	};
+
+	$(window).keydown(function(event) {
+		if (event.keyCode == 116) { // User presses F5 to refresh
+		   refresh = true;
+		 }
+	});
+</script>
